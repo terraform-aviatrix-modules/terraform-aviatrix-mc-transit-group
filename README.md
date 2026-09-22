@@ -1,101 +1,183 @@
-# terraform-aviatrix-module-template
-
-This repository provides standardized instructions and conventions for creating Aviatrix modules.
-
-#### Instructions
-1. Create a new repository from this template, by clicking the green "Use this template" button. Make sure to use the [module naming convention](#module-naming-convention)
-2. Clone the repository to your system with ```git clone <repository>```
-5. Edit the repository and commit and update the new repository:
-    - Commit changes: ```git commit -am "Description of changes"```
-    - Push to repository: ```git push origin master```
-6. Update the readme.md file
-    - Remove all content above [the line](#delete-everything-above-and-including-this-line).
-    - Fill out the rest of file based on the provided template.
-7. When ready for release, create a [tag](#tagging).
-
-#### Conventions
-
-###### Repositories
-- For each module, a new reposity shall be created. This is for the purpose of:
-    - Version control per module
-    - Issue handling/feature requests per module
-    - Easier consumption of the module in projects and publication in registers like Terraform Cloud
-
-###### Module Naming convention
-We will use the following convention for naming repositories:
-
-**terraform-aviatrix-\<cloudname or mc for multi-cloud>-\<function>**
-
-Function can be a single word, or more if required to accurately describe the module function. These should be seperated by hyphens. Example:
-
-**terraform-aviatrix-aws-transit-firenet**
-
-###### Resource Naming convention
-```A naming convention for objects created through our modules needs to be decided upon and inserted here.```
-
-###### Tagging
-In order to use modules, it is best practice to tag versions when they are ready for consumption. The format to be used for this is "vx.x.x" e.g. v0.0.1. This can be done on Github by clicking "Create a new release". It is also possible to do this from your system. Make sure you committed your changes to the master branch. After that, create a new tag with ```git tag vx.x.x``` and push the tagged version to the tagged branch with ```git push origin vx.x.x```.
-
-As soon as a module is ready for publishing publicly, the tag release should move up to the first major release. A tag v1.0.0 should be created and the repository can now be altered from a private to a public.
-
-###### Module layout
-The repository contains the default file layout that is recommended to use.
-file | use
-:---|:---
-main.tf | This should contain the resources to be created
-variables.tf | This should contain all expected input variables
-output.tf | This should contain all output objects
-
-Diagram images used in the readme.md should be stored on a publicly available environment. E.g. a public s3 bucket. The reason for that is, when publishing these modules at some point (e.g. Terraform Registry), the image source should always be publicly accessible, even though the repository itself might not be.
-
-
-#### Delete everything above and including this line
-***
-
-# Repository Name
+# terraform-aviatrix-mc-transit-group
 
 ### Description
-\<Provide a description of the module>
 
-### Diagram
-\<Provide a diagram of the high level constructs thet will be created by this module>
-<img src="<IMG URL>"  height="250">
+Deploys a VPC/VNet/VCN and an Aviatrix transit gateway group using the `aviatrix_transit_group` and `aviatrix_transit_instance` resources. It is also possible to use an existing VPC/VNet/VCN.
+
+This module uses the gateway group model introduced in controller version 9.0, which splits gateway configuration into a group (policy) and individual instances (placement). This enables horizontal scaling by adding instances to the group without modifying the group-level policy.
 
 ### Compatibility
-Module version | Terraform version | Controller version | Terraform provider version
-:--- | :--- | :--- | :---
-v1.0.2 | 0.12 | 6.1 | 0.2.16
-v1.0.1 | | |
-v1.0.0 | | |
 
-### Usage Example
+| Module version | Terraform version | Controller version | Terraform provider version |
+| :------------- | :---------------- | :----------------- | :------------------------- |
+| v9.0.0         | >= 1.3.0          | >= 9.0             | >= 9.0.0                   |
+
+Check [release notes](https://github.com/terraform-aviatrix-modules/terraform-aviatrix-mc-transit-group/blob/master/RELEASE_NOTES.md) for more details.
+Check [Compatibility list](https://github.com/terraform-aviatrix-modules/terraform-aviatrix-mc-transit-group/blob/master/COMPATIBILITY.md) for older versions.
+
+### Usage Examples
+
+See [examples](https://github.com/terraform-aviatrix-modules/terraform-aviatrix-mc-transit-group/blob/master/examples/)
+
+#### AWS Greenfield Transit
+
 ```hcl
-module "transit_aws_1" {
-  source  = "terraform-aviatrix-modules/aws-transit/aviatrix"
-  version = "1.0.0"
+module "transit_aws" {
+  source  = "terraform-aviatrix-modules/mc-transit-group/aviatrix"
+  version = "9.0.0"
 
-  cidr = "10.1.0.0/20"
-  region = "eu-west-1"
-  aws_account_name = "AWS"
+  cloud    = "AWS"
+  name     = "transit-aws"
+  cidr     = "10.1.0.0/23"
+  region   = "eu-west-3"
+  account  = "AWS"
+  instances = {
+    "transit-aws"   = {}
+    "transit-aws-2" = {}
+  }
+}
+```
+
+#### AWS with FireNet
+
+```hcl
+module "transit_aws_firenet" {
+  source  = "terraform-aviatrix-modules/mc-transit-group/aviatrix"
+  version = "9.0.0"
+
+  cloud          = "AWS"
+  name           = "transit-firenet"
+  cidr           = "10.2.0.0/23"
+  region         = "eu-west-1"
+  account        = "AWS"
+  enable_firenet = true
+  instances = {
+    "transit-firenet"   = {}
+    "transit-firenet-2" = {}
+  }
 }
 ```
 
 ### Variables
+
 The following variables are required:
 
-key | value
-:--- | :---
-\<keyname> | \<description of value that should be provided in this variable>
+| key | value |
+| :--- | :--- |
+| cloud | Cloud type. Valid values: "aws", "azure", "gcp", "oci", "ali". |
+| name | Name for the VPC/VNet and transit group. |
+| account | The Aviatrix access account name. |
 
 The following variables are optional:
 
-key | default | value 
-:---|:---|:---
-\<keyname> | \<default value> | \<description of value that should be provided in this variable>
+<img src="https://github.com/terraform-aviatrix-modules/terraform-aviatrix-mc-transit-group/blob/master/img/aws.png?raw=true" title="AWS"> = AWS, <img src="https://github.com/terraform-aviatrix-modules/terraform-aviatrix-mc-transit-group/blob/master/img/azure.png?raw=true" title="Azure"> = Azure, <img src="https://github.com/terraform-aviatrix-modules/terraform-aviatrix-mc-transit-group/blob/master/img/gcp.png?raw=true" title="GCP"> = GCP, <img src="https://github.com/terraform-aviatrix-modules/terraform-aviatrix-mc-transit-group/blob/master/img/oci.png?raw=true" title="OCI"> = OCI, <img src="https://github.com/terraform-aviatrix-modules/terraform-aviatrix-mc-transit-group/blob/master/img/alibaba.png?raw=true" title="Alibaba"> = Alibaba
+
+| Key | Supported_CSPs | Default value | Description |
+| :--- | ---: | :--- | :--- |
+| region | <img src="https://github.com/terraform-aviatrix-modules/terraform-aviatrix-mc-transit-group/blob/master/img/aws.png?raw=true" title="AWS"> <img src="https://github.com/terraform-aviatrix-modules/terraform-aviatrix-mc-transit-group/blob/master/img/azure.png?raw=true" title="Azure"> <img src="https://github.com/terraform-aviatrix-modules/terraform-aviatrix-mc-transit-group/blob/master/img/gcp.png?raw=true" title="GCP"> <img src="https://github.com/terraform-aviatrix-modules/terraform-aviatrix-mc-transit-group/blob/master/img/oci.png?raw=true" title="OCI"> <img src="https://github.com/terraform-aviatrix-modules/terraform-aviatrix-mc-transit-group/blob/master/img/alibaba.png?raw=true" title="Alibaba"> | "" | Region for the VPC/VNet. Optional for edge gateways. |
+| cidr | <img src="https://github.com/terraform-aviatrix-modules/terraform-aviatrix-mc-transit-group/blob/master/img/aws.png?raw=true" title="AWS"> <img src="https://github.com/terraform-aviatrix-modules/terraform-aviatrix-mc-transit-group/blob/master/img/azure.png?raw=true" title="Azure"> <img src="https://github.com/terraform-aviatrix-modules/terraform-aviatrix-mc-transit-group/blob/master/img/gcp.png?raw=true" title="GCP"> <img src="https://github.com/terraform-aviatrix-modules/terraform-aviatrix-mc-transit-group/blob/master/img/oci.png?raw=true" title="OCI"> <img src="https://github.com/terraform-aviatrix-modules/terraform-aviatrix-mc-transit-group/blob/master/img/alibaba.png?raw=true" title="Alibaba"> | "" | CIDR block for the VPC/VNet. Not used when use_existing_vpc is true. |
+| use_existing_vpc | <img src="https://github.com/terraform-aviatrix-modules/terraform-aviatrix-mc-transit-group/blob/master/img/aws.png?raw=true" title="AWS"> <img src="https://github.com/terraform-aviatrix-modules/terraform-aviatrix-mc-transit-group/blob/master/img/azure.png?raw=true" title="Azure"> <img src="https://github.com/terraform-aviatrix-modules/terraform-aviatrix-mc-transit-group/blob/master/img/gcp.png?raw=true" title="GCP"> <img src="https://github.com/terraform-aviatrix-modules/terraform-aviatrix-mc-transit-group/blob/master/img/oci.png?raw=true" title="OCI"> <img src="https://github.com/terraform-aviatrix-modules/terraform-aviatrix-mc-transit-group/blob/master/img/alibaba.png?raw=true" title="Alibaba"> | false | Set to true to use an existing VPC/VNet instead of creating one. |
+| vpc_id | <img src="https://github.com/terraform-aviatrix-modules/terraform-aviatrix-mc-transit-group/blob/master/img/aws.png?raw=true" title="AWS"> <img src="https://github.com/terraform-aviatrix-modules/terraform-aviatrix-mc-transit-group/blob/master/img/azure.png?raw=true" title="Azure"> <img src="https://github.com/terraform-aviatrix-modules/terraform-aviatrix-mc-transit-group/blob/master/img/gcp.png?raw=true" title="GCP"> <img src="https://github.com/terraform-aviatrix-modules/terraform-aviatrix-mc-transit-group/blob/master/img/oci.png?raw=true" title="OCI"> <img src="https://github.com/terraform-aviatrix-modules/terraform-aviatrix-mc-transit-group/blob/master/img/alibaba.png?raw=true" title="Alibaba"> | "" | VPC ID when using an existing VPC (use_existing_vpc = true). |
+| resource_group | <img src="https://github.com/terraform-aviatrix-modules/terraform-aviatrix-mc-transit-group/blob/master/img/azure.png?raw=true" title="Azure"> | null | Azure resource group name. |
+| subnet_pairs | <img src="https://github.com/terraform-aviatrix-modules/terraform-aviatrix-mc-transit-group/blob/master/img/aws.png?raw=true" title="AWS"> <img src="https://github.com/terraform-aviatrix-modules/terraform-aviatrix-mc-transit-group/blob/master/img/azure.png?raw=true" title="Azure"> | null | Number of public/private subnet pairs. |
+| subnet_size | <img src="https://github.com/terraform-aviatrix-modules/terraform-aviatrix-mc-transit-group/blob/master/img/aws.png?raw=true" title="AWS"> <img src="https://github.com/terraform-aviatrix-modules/terraform-aviatrix-mc-transit-group/blob/master/img/azure.png?raw=true" title="Azure"> | null | Size of each subnet (CIDR prefix length). |
+| enable_ipv6 | <img src="https://github.com/terraform-aviatrix-modules/terraform-aviatrix-mc-transit-group/blob/master/img/aws.png?raw=true" title="AWS"> <img src="https://github.com/terraform-aviatrix-modules/terraform-aviatrix-mc-transit-group/blob/master/img/azure.png?raw=true" title="Azure"> | false | Enable IPv6 on the VPC and transit group. |
+| ipv6_cidr | <img src="https://github.com/terraform-aviatrix-modules/terraform-aviatrix-mc-transit-group/blob/master/img/aws.png?raw=true" title="AWS"> <img src="https://github.com/terraform-aviatrix-modules/terraform-aviatrix-mc-transit-group/blob/master/img/azure.png?raw=true" title="Azure"> | null | IPv6 CIDR for the VPC. Auto-assigned for AWS. |
+| lan_cidr | <img src="https://github.com/terraform-aviatrix-modules/terraform-aviatrix-mc-transit-group/blob/master/img/gcp.png?raw=true" title="GCP"> | "" | CIDR for the GCP LAN VPC (Transit FireNet with GCP). |
+| gw_type | <img src="https://github.com/terraform-aviatrix-modules/terraform-aviatrix-mc-transit-group/blob/master/img/aws.png?raw=true" title="AWS"> <img src="https://github.com/terraform-aviatrix-modules/terraform-aviatrix-mc-transit-group/blob/master/img/azure.png?raw=true" title="Azure"> <img src="https://github.com/terraform-aviatrix-modules/terraform-aviatrix-mc-transit-group/blob/master/img/gcp.png?raw=true" title="GCP"> <img src="https://github.com/terraform-aviatrix-modules/terraform-aviatrix-mc-transit-group/blob/master/img/oci.png?raw=true" title="OCI"> <img src="https://github.com/terraform-aviatrix-modules/terraform-aviatrix-mc-transit-group/blob/master/img/alibaba.png?raw=true" title="Alibaba"> | "TRANSIT" | Gateway type. Valid values: TRANSIT, EDGETRANSIT, STANDALONE. |
+| instance_size | <img src="https://github.com/terraform-aviatrix-modules/terraform-aviatrix-mc-transit-group/blob/master/img/aws.png?raw=true" title="AWS"> <img src="https://github.com/terraform-aviatrix-modules/terraform-aviatrix-mc-transit-group/blob/master/img/azure.png?raw=true" title="Azure"> <img src="https://github.com/terraform-aviatrix-modules/terraform-aviatrix-mc-transit-group/blob/master/img/gcp.png?raw=true" title="GCP"> <img src="https://github.com/terraform-aviatrix-modules/terraform-aviatrix-mc-transit-group/blob/master/img/oci.png?raw=true" title="OCI"> <img src="https://github.com/terraform-aviatrix-modules/terraform-aviatrix-mc-transit-group/blob/master/img/alibaba.png?raw=true" title="Alibaba"> | "" | Gateway instance size. Defaults per cloud if empty. |
+| private_network | <img src="https://github.com/terraform-aviatrix-modules/terraform-aviatrix-mc-transit-group/blob/master/img/aws.png?raw=true" title="AWS"> <img src="https://github.com/terraform-aviatrix-modules/terraform-aviatrix-mc-transit-group/blob/master/img/azure.png?raw=true" title="Azure"> | false | Deploy gateways without a public IP. |
+| insane_mode | <img src="https://github.com/terraform-aviatrix-modules/terraform-aviatrix-mc-transit-group/blob/master/img/aws.png?raw=true" title="AWS"> <img src="https://github.com/terraform-aviatrix-modules/terraform-aviatrix-mc-transit-group/blob/master/img/azure.png?raw=true" title="Azure"> <img src="https://github.com/terraform-aviatrix-modules/terraform-aviatrix-mc-transit-group/blob/master/img/gcp.png?raw=true" title="GCP"> <img src="https://github.com/terraform-aviatrix-modules/terraform-aviatrix-mc-transit-group/blob/master/img/oci.png?raw=true" title="OCI"> | false | Module-level default for High Performance Encryption (HPE). |
+| enable_nat | <img src="https://github.com/terraform-aviatrix-modules/terraform-aviatrix-mc-transit-group/blob/master/img/aws.png?raw=true" title="AWS"> <img src="https://github.com/terraform-aviatrix-modules/terraform-aviatrix-mc-transit-group/blob/master/img/azure.png?raw=true" title="Azure"> <img src="https://github.com/terraform-aviatrix-modules/terraform-aviatrix-mc-transit-group/blob/master/img/gcp.png?raw=true" title="GCP"> <img src="https://github.com/terraform-aviatrix-modules/terraform-aviatrix-mc-transit-group/blob/master/img/oci.png?raw=true" title="OCI"> <img src="https://github.com/terraform-aviatrix-modules/terraform-aviatrix-mc-transit-group/blob/master/img/alibaba.png?raw=true" title="Alibaba"> | false | Enable NAT on the transit group. |
+| enable_connected_transit | <img src="https://github.com/terraform-aviatrix-modules/terraform-aviatrix-mc-transit-group/blob/master/img/aws.png?raw=true" title="AWS"> <img src="https://github.com/terraform-aviatrix-modules/terraform-aviatrix-mc-transit-group/blob/master/img/azure.png?raw=true" title="Azure"> <img src="https://github.com/terraform-aviatrix-modules/terraform-aviatrix-mc-transit-group/blob/master/img/gcp.png?raw=true" title="GCP"> <img src="https://github.com/terraform-aviatrix-modules/terraform-aviatrix-mc-transit-group/blob/master/img/oci.png?raw=true" title="OCI"> <img src="https://github.com/terraform-aviatrix-modules/terraform-aviatrix-mc-transit-group/blob/master/img/alibaba.png?raw=true" title="Alibaba"> | true | Enable connected transit. |
+| enable_hybrid_connection | <img src="https://github.com/terraform-aviatrix-modules/terraform-aviatrix-mc-transit-group/blob/master/img/aws.png?raw=true" title="AWS"> <img src="https://github.com/terraform-aviatrix-modules/terraform-aviatrix-mc-transit-group/blob/master/img/azure.png?raw=true" title="Azure"> <img src="https://github.com/terraform-aviatrix-modules/terraform-aviatrix-mc-transit-group/blob/master/img/gcp.png?raw=true" title="GCP"> <img src="https://github.com/terraform-aviatrix-modules/terraform-aviatrix-mc-transit-group/blob/master/img/oci.png?raw=true" title="OCI"> <img src="https://github.com/terraform-aviatrix-modules/terraform-aviatrix-mc-transit-group/blob/master/img/alibaba.png?raw=true" title="Alibaba"> | false | Enable hybrid connection (TGW/DXGW/VGW). |
+| enable_firenet | <img src="https://github.com/terraform-aviatrix-modules/terraform-aviatrix-mc-transit-group/blob/master/img/aws.png?raw=true" title="AWS"> <img src="https://github.com/terraform-aviatrix-modules/terraform-aviatrix-mc-transit-group/blob/master/img/azure.png?raw=true" title="Azure"> <img src="https://github.com/terraform-aviatrix-modules/terraform-aviatrix-mc-transit-group/blob/master/img/gcp.png?raw=true" title="GCP"> <img src="https://github.com/terraform-aviatrix-modules/terraform-aviatrix-mc-transit-group/blob/master/img/oci.png?raw=true" title="OCI"> | false | Enable FireNet. |
+| enable_transit_firenet | <img src="https://github.com/terraform-aviatrix-modules/terraform-aviatrix-mc-transit-group/blob/master/img/aws.png?raw=true" title="AWS"> <img src="https://github.com/terraform-aviatrix-modules/terraform-aviatrix-mc-transit-group/blob/master/img/azure.png?raw=true" title="Azure"> <img src="https://github.com/terraform-aviatrix-modules/terraform-aviatrix-mc-transit-group/blob/master/img/gcp.png?raw=true" title="GCP"> <img src="https://github.com/terraform-aviatrix-modules/terraform-aviatrix-mc-transit-group/blob/master/img/oci.png?raw=true" title="OCI"> | false | Enable Transit FireNet. |
+| enable_segmentation | <img src="https://github.com/terraform-aviatrix-modules/terraform-aviatrix-mc-transit-group/blob/master/img/aws.png?raw=true" title="AWS"> <img src="https://github.com/terraform-aviatrix-modules/terraform-aviatrix-mc-transit-group/blob/master/img/azure.png?raw=true" title="Azure"> <img src="https://github.com/terraform-aviatrix-modules/terraform-aviatrix-mc-transit-group/blob/master/img/gcp.png?raw=true" title="GCP"> <img src="https://github.com/terraform-aviatrix-modules/terraform-aviatrix-mc-transit-group/blob/master/img/oci.png?raw=true" title="OCI"> <img src="https://github.com/terraform-aviatrix-modules/terraform-aviatrix-mc-transit-group/blob/master/img/alibaba.png?raw=true" title="Alibaba"> | false | Enable segmentation. |
+| enable_gateway_load_balancer | <img src="https://github.com/terraform-aviatrix-modules/terraform-aviatrix-mc-transit-group/blob/master/img/aws.png?raw=true" title="AWS"> | false | Enable Gateway Load Balancer (AWS only). |
+| enable_advertise_transit_cidr | <img src="https://github.com/terraform-aviatrix-modules/terraform-aviatrix-mc-transit-group/blob/master/img/aws.png?raw=true" title="AWS"> <img src="https://github.com/terraform-aviatrix-modules/terraform-aviatrix-mc-transit-group/blob/master/img/azure.png?raw=true" title="Azure"> <img src="https://github.com/terraform-aviatrix-modules/terraform-aviatrix-mc-transit-group/blob/master/img/gcp.png?raw=true" title="GCP"> <img src="https://github.com/terraform-aviatrix-modules/terraform-aviatrix-mc-transit-group/blob/master/img/oci.png?raw=true" title="OCI"> <img src="https://github.com/terraform-aviatrix-modules/terraform-aviatrix-mc-transit-group/blob/master/img/alibaba.png?raw=true" title="Alibaba"> | false | Enable advertise transit CIDR. |
+| customized_spoke_vpc_routes | <img src="https://github.com/terraform-aviatrix-modules/terraform-aviatrix-mc-transit-group/blob/master/img/aws.png?raw=true" title="AWS"> <img src="https://github.com/terraform-aviatrix-modules/terraform-aviatrix-mc-transit-group/blob/master/img/azure.png?raw=true" title="Azure"> <img src="https://github.com/terraform-aviatrix-modules/terraform-aviatrix-mc-transit-group/blob/master/img/gcp.png?raw=true" title="GCP"> <img src="https://github.com/terraform-aviatrix-modules/terraform-aviatrix-mc-transit-group/blob/master/img/oci.png?raw=true" title="OCI"> <img src="https://github.com/terraform-aviatrix-modules/terraform-aviatrix-mc-transit-group/blob/master/img/alibaba.png?raw=true" title="Alibaba"> | null | Set of customized spoke VPC routes for the transit group. |
+| enable_transit_summarize_cidr_to_tgw | <img src="https://github.com/terraform-aviatrix-modules/terraform-aviatrix-mc-transit-group/blob/master/img/aws.png?raw=true" title="AWS"> | false | Enable transit summarize CIDR to TGW. |
+| enable_multi_tier_transit | <img src="https://github.com/terraform-aviatrix-modules/terraform-aviatrix-mc-transit-group/blob/master/img/aws.png?raw=true" title="AWS"> <img src="https://github.com/terraform-aviatrix-modules/terraform-aviatrix-mc-transit-group/blob/master/img/azure.png?raw=true" title="Azure"> <img src="https://github.com/terraform-aviatrix-modules/terraform-aviatrix-mc-transit-group/blob/master/img/gcp.png?raw=true" title="GCP"> <img src="https://github.com/terraform-aviatrix-modules/terraform-aviatrix-mc-transit-group/blob/master/img/oci.png?raw=true" title="OCI"> <img src="https://github.com/terraform-aviatrix-modules/terraform-aviatrix-mc-transit-group/blob/master/img/alibaba.png?raw=true" title="Alibaba"> | false | Enable multi-tier transit. |
+| enable_jumbo_frame | <img src="https://github.com/terraform-aviatrix-modules/terraform-aviatrix-mc-transit-group/blob/master/img/aws.png?raw=true" title="AWS"> <img src="https://github.com/terraform-aviatrix-modules/terraform-aviatrix-mc-transit-group/blob/master/img/azure.png?raw=true" title="Azure"> <img src="https://github.com/terraform-aviatrix-modules/terraform-aviatrix-mc-transit-group/blob/master/img/gcp.png?raw=true" title="GCP"> <img src="https://github.com/terraform-aviatrix-modules/terraform-aviatrix-mc-transit-group/blob/master/img/oci.png?raw=true" title="OCI"> <img src="https://github.com/terraform-aviatrix-modules/terraform-aviatrix-mc-transit-group/blob/master/img/alibaba.png?raw=true" title="Alibaba"> | null | Enable jumbo frame support. |
+| enable_gro_gso | <img src="https://github.com/terraform-aviatrix-modules/terraform-aviatrix-mc-transit-group/blob/master/img/aws.png?raw=true" title="AWS"> <img src="https://github.com/terraform-aviatrix-modules/terraform-aviatrix-mc-transit-group/blob/master/img/azure.png?raw=true" title="Azure"> <img src="https://github.com/terraform-aviatrix-modules/terraform-aviatrix-mc-transit-group/blob/master/img/gcp.png?raw=true" title="GCP"> <img src="https://github.com/terraform-aviatrix-modules/terraform-aviatrix-mc-transit-group/blob/master/img/oci.png?raw=true" title="OCI"> <img src="https://github.com/terraform-aviatrix-modules/terraform-aviatrix-mc-transit-group/blob/master/img/alibaba.png?raw=true" title="Alibaba"> | null | Enable GRO/GSO. |
+| enable_vpc_dns_server | <img src="https://github.com/terraform-aviatrix-modules/terraform-aviatrix-mc-transit-group/blob/master/img/aws.png?raw=true" title="AWS"> <img src="https://github.com/terraform-aviatrix-modules/terraform-aviatrix-mc-transit-group/blob/master/img/azure.png?raw=true" title="Azure"> <img src="https://github.com/terraform-aviatrix-modules/terraform-aviatrix-mc-transit-group/blob/master/img/alibaba.png?raw=true" title="Alibaba"> | null | Enable VPC DNS Server for Gateway. |
+| private_route_table_config | <img src="https://github.com/terraform-aviatrix-modules/terraform-aviatrix-mc-transit-group/blob/master/img/azure.png?raw=true" title="Azure"> | [] | List of private route table labels (Azure). |
+| enable_active_standby | <img src="https://github.com/terraform-aviatrix-modules/terraform-aviatrix-mc-transit-group/blob/master/img/aws.png?raw=true" title="AWS"> <img src="https://github.com/terraform-aviatrix-modules/terraform-aviatrix-mc-transit-group/blob/master/img/azure.png?raw=true" title="Azure"> <img src="https://github.com/terraform-aviatrix-modules/terraform-aviatrix-mc-transit-group/blob/master/img/gcp.png?raw=true" title="GCP"> <img src="https://github.com/terraform-aviatrix-modules/terraform-aviatrix-mc-transit-group/blob/master/img/oci.png?raw=true" title="OCI"> <img src="https://github.com/terraform-aviatrix-modules/terraform-aviatrix-mc-transit-group/blob/master/img/alibaba.png?raw=true" title="Alibaba"> | false | Enable active-standby mode. |
+| enable_active_standby_preemptive | <img src="https://github.com/terraform-aviatrix-modules/terraform-aviatrix-mc-transit-group/blob/master/img/aws.png?raw=true" title="AWS"> <img src="https://github.com/terraform-aviatrix-modules/terraform-aviatrix-mc-transit-group/blob/master/img/azure.png?raw=true" title="Azure"> <img src="https://github.com/terraform-aviatrix-modules/terraform-aviatrix-mc-transit-group/blob/master/img/gcp.png?raw=true" title="GCP"> <img src="https://github.com/terraform-aviatrix-modules/terraform-aviatrix-mc-transit-group/blob/master/img/oci.png?raw=true" title="OCI"> <img src="https://github.com/terraform-aviatrix-modules/terraform-aviatrix-mc-transit-group/blob/master/img/alibaba.png?raw=true" title="Alibaba"> | null | Enable preemptive mode for active-standby. |
+| enable_learned_cidrs_approval | <img src="https://github.com/terraform-aviatrix-modules/terraform-aviatrix-mc-transit-group/blob/master/img/aws.png?raw=true" title="AWS"> <img src="https://github.com/terraform-aviatrix-modules/terraform-aviatrix-mc-transit-group/blob/master/img/azure.png?raw=true" title="Azure"> <img src="https://github.com/terraform-aviatrix-modules/terraform-aviatrix-mc-transit-group/blob/master/img/gcp.png?raw=true" title="GCP"> <img src="https://github.com/terraform-aviatrix-modules/terraform-aviatrix-mc-transit-group/blob/master/img/oci.png?raw=true" title="OCI"> <img src="https://github.com/terraform-aviatrix-modules/terraform-aviatrix-mc-transit-group/blob/master/img/alibaba.png?raw=true" title="Alibaba"> | false | Enable learned CIDRs approval. |
+| learned_cidrs_approval_mode | <img src="https://github.com/terraform-aviatrix-modules/terraform-aviatrix-mc-transit-group/blob/master/img/aws.png?raw=true" title="AWS"> <img src="https://github.com/terraform-aviatrix-modules/terraform-aviatrix-mc-transit-group/blob/master/img/azure.png?raw=true" title="Azure"> <img src="https://github.com/terraform-aviatrix-modules/terraform-aviatrix-mc-transit-group/blob/master/img/gcp.png?raw=true" title="GCP"> <img src="https://github.com/terraform-aviatrix-modules/terraform-aviatrix-mc-transit-group/blob/master/img/oci.png?raw=true" title="OCI"> <img src="https://github.com/terraform-aviatrix-modules/terraform-aviatrix-mc-transit-group/blob/master/img/alibaba.png?raw=true" title="Alibaba"> | null | Learned CIDRs approval mode. Valid values: gateway, connection. |
+| approved_learned_cidrs | <img src="https://github.com/terraform-aviatrix-modules/terraform-aviatrix-mc-transit-group/blob/master/img/aws.png?raw=true" title="AWS"> <img src="https://github.com/terraform-aviatrix-modules/terraform-aviatrix-mc-transit-group/blob/master/img/azure.png?raw=true" title="Azure"> <img src="https://github.com/terraform-aviatrix-modules/terraform-aviatrix-mc-transit-group/blob/master/img/gcp.png?raw=true" title="GCP"> <img src="https://github.com/terraform-aviatrix-modules/terraform-aviatrix-mc-transit-group/blob/master/img/oci.png?raw=true" title="OCI"> <img src="https://github.com/terraform-aviatrix-modules/terraform-aviatrix-mc-transit-group/blob/master/img/alibaba.png?raw=true" title="Alibaba"> | null | Set of approved learned CIDRs. |
+| enable_bgp_over_lan | <img src="https://github.com/terraform-aviatrix-modules/terraform-aviatrix-mc-transit-group/blob/master/img/azure.png?raw=true" title="Azure"> <img src="https://github.com/terraform-aviatrix-modules/terraform-aviatrix-mc-transit-group/blob/master/img/gcp.png?raw=true" title="GCP"> | null | Enable BGP over LAN. |
+| enable_bgp_ecmp | <img src="https://github.com/terraform-aviatrix-modules/terraform-aviatrix-mc-transit-group/blob/master/img/aws.png?raw=true" title="AWS"> <img src="https://github.com/terraform-aviatrix-modules/terraform-aviatrix-mc-transit-group/blob/master/img/azure.png?raw=true" title="Azure"> <img src="https://github.com/terraform-aviatrix-modules/terraform-aviatrix-mc-transit-group/blob/master/img/gcp.png?raw=true" title="GCP"> <img src="https://github.com/terraform-aviatrix-modules/terraform-aviatrix-mc-transit-group/blob/master/img/oci.png?raw=true" title="OCI"> <img src="https://github.com/terraform-aviatrix-modules/terraform-aviatrix-mc-transit-group/blob/master/img/alibaba.png?raw=true" title="Alibaba"> | false | Enable BGP ECMP. |
+| enable_s2c_rx_balancing | <img src="https://github.com/terraform-aviatrix-modules/terraform-aviatrix-mc-transit-group/blob/master/img/aws.png?raw=true" title="AWS"> <img src="https://github.com/terraform-aviatrix-modules/terraform-aviatrix-mc-transit-group/blob/master/img/azure.png?raw=true" title="Azure"> <img src="https://github.com/terraform-aviatrix-modules/terraform-aviatrix-mc-transit-group/blob/master/img/gcp.png?raw=true" title="GCP"> <img src="https://github.com/terraform-aviatrix-modules/terraform-aviatrix-mc-transit-group/blob/master/img/oci.png?raw=true" title="OCI"> <img src="https://github.com/terraform-aviatrix-modules/terraform-aviatrix-mc-transit-group/blob/master/img/alibaba.png?raw=true" title="Alibaba"> | false | Enable S2C RX balancing. |
+| local_as_number | <img src="https://github.com/terraform-aviatrix-modules/terraform-aviatrix-mc-transit-group/blob/master/img/aws.png?raw=true" title="AWS"> <img src="https://github.com/terraform-aviatrix-modules/terraform-aviatrix-mc-transit-group/blob/master/img/azure.png?raw=true" title="Azure"> <img src="https://github.com/terraform-aviatrix-modules/terraform-aviatrix-mc-transit-group/blob/master/img/gcp.png?raw=true" title="GCP"> <img src="https://github.com/terraform-aviatrix-modules/terraform-aviatrix-mc-transit-group/blob/master/img/oci.png?raw=true" title="OCI"> <img src="https://github.com/terraform-aviatrix-modules/terraform-aviatrix-mc-transit-group/blob/master/img/alibaba.png?raw=true" title="Alibaba"> | null | Local AS number for BGP. |
+| prepend_as_path | <img src="https://github.com/terraform-aviatrix-modules/terraform-aviatrix-mc-transit-group/blob/master/img/aws.png?raw=true" title="AWS"> <img src="https://github.com/terraform-aviatrix-modules/terraform-aviatrix-mc-transit-group/blob/master/img/azure.png?raw=true" title="Azure"> <img src="https://github.com/terraform-aviatrix-modules/terraform-aviatrix-mc-transit-group/blob/master/img/gcp.png?raw=true" title="GCP"> <img src="https://github.com/terraform-aviatrix-modules/terraform-aviatrix-mc-transit-group/blob/master/img/oci.png?raw=true" title="OCI"> <img src="https://github.com/terraform-aviatrix-modules/terraform-aviatrix-mc-transit-group/blob/master/img/alibaba.png?raw=true" title="Alibaba"> | null | List of AS numbers to prepend to the AS path. |
+| enable_preserve_as_path | <img src="https://github.com/terraform-aviatrix-modules/terraform-aviatrix-mc-transit-group/blob/master/img/aws.png?raw=true" title="AWS"> <img src="https://github.com/terraform-aviatrix-modules/terraform-aviatrix-mc-transit-group/blob/master/img/azure.png?raw=true" title="Azure"> <img src="https://github.com/terraform-aviatrix-modules/terraform-aviatrix-mc-transit-group/blob/master/img/gcp.png?raw=true" title="GCP"> <img src="https://github.com/terraform-aviatrix-modules/terraform-aviatrix-mc-transit-group/blob/master/img/oci.png?raw=true" title="OCI"> <img src="https://github.com/terraform-aviatrix-modules/terraform-aviatrix-mc-transit-group/blob/master/img/alibaba.png?raw=true" title="Alibaba"> | null | Enable preserve AS path. |
+| bgp_polling_time | <img src="https://github.com/terraform-aviatrix-modules/terraform-aviatrix-mc-transit-group/blob/master/img/aws.png?raw=true" title="AWS"> <img src="https://github.com/terraform-aviatrix-modules/terraform-aviatrix-mc-transit-group/blob/master/img/azure.png?raw=true" title="Azure"> <img src="https://github.com/terraform-aviatrix-modules/terraform-aviatrix-mc-transit-group/blob/master/img/gcp.png?raw=true" title="GCP"> <img src="https://github.com/terraform-aviatrix-modules/terraform-aviatrix-mc-transit-group/blob/master/img/oci.png?raw=true" title="OCI"> <img src="https://github.com/terraform-aviatrix-modules/terraform-aviatrix-mc-transit-group/blob/master/img/alibaba.png?raw=true" title="Alibaba"> | null | BGP route polling time in seconds. |
+| bgp_neighbor_status_polling_time | <img src="https://github.com/terraform-aviatrix-modules/terraform-aviatrix-mc-transit-group/blob/master/img/aws.png?raw=true" title="AWS"> <img src="https://github.com/terraform-aviatrix-modules/terraform-aviatrix-mc-transit-group/blob/master/img/azure.png?raw=true" title="Azure"> <img src="https://github.com/terraform-aviatrix-modules/terraform-aviatrix-mc-transit-group/blob/master/img/gcp.png?raw=true" title="GCP"> <img src="https://github.com/terraform-aviatrix-modules/terraform-aviatrix-mc-transit-group/blob/master/img/oci.png?raw=true" title="OCI"> <img src="https://github.com/terraform-aviatrix-modules/terraform-aviatrix-mc-transit-group/blob/master/img/alibaba.png?raw=true" title="Alibaba"> | null | BGP neighbor status polling time in seconds. |
+| bgp_hold_time | <img src="https://github.com/terraform-aviatrix-modules/terraform-aviatrix-mc-transit-group/blob/master/img/aws.png?raw=true" title="AWS"> <img src="https://github.com/terraform-aviatrix-modules/terraform-aviatrix-mc-transit-group/blob/master/img/azure.png?raw=true" title="Azure"> <img src="https://github.com/terraform-aviatrix-modules/terraform-aviatrix-mc-transit-group/blob/master/img/gcp.png?raw=true" title="GCP"> <img src="https://github.com/terraform-aviatrix-modules/terraform-aviatrix-mc-transit-group/blob/master/img/oci.png?raw=true" title="OCI"> <img src="https://github.com/terraform-aviatrix-modules/terraform-aviatrix-mc-transit-group/blob/master/img/alibaba.png?raw=true" title="Alibaba"> | null | BGP hold time in seconds. |
+| bgp_send_communities | <img src="https://github.com/terraform-aviatrix-modules/terraform-aviatrix-mc-transit-group/blob/master/img/aws.png?raw=true" title="AWS"> <img src="https://github.com/terraform-aviatrix-modules/terraform-aviatrix-mc-transit-group/blob/master/img/azure.png?raw=true" title="Azure"> <img src="https://github.com/terraform-aviatrix-modules/terraform-aviatrix-mc-transit-group/blob/master/img/gcp.png?raw=true" title="GCP"> <img src="https://github.com/terraform-aviatrix-modules/terraform-aviatrix-mc-transit-group/blob/master/img/oci.png?raw=true" title="OCI"> <img src="https://github.com/terraform-aviatrix-modules/terraform-aviatrix-mc-transit-group/blob/master/img/alibaba.png?raw=true" title="Alibaba"> | null | Enable sending BGP communities. |
+| bgp_accept_communities | <img src="https://github.com/terraform-aviatrix-modules/terraform-aviatrix-mc-transit-group/blob/master/img/aws.png?raw=true" title="AWS"> <img src="https://github.com/terraform-aviatrix-modules/terraform-aviatrix-mc-transit-group/blob/master/img/azure.png?raw=true" title="Azure"> <img src="https://github.com/terraform-aviatrix-modules/terraform-aviatrix-mc-transit-group/blob/master/img/gcp.png?raw=true" title="GCP"> <img src="https://github.com/terraform-aviatrix-modules/terraform-aviatrix-mc-transit-group/blob/master/img/oci.png?raw=true" title="OCI"> <img src="https://github.com/terraform-aviatrix-modules/terraform-aviatrix-mc-transit-group/blob/master/img/alibaba.png?raw=true" title="Alibaba"> | null | Enable accepting BGP communities. |
+| enable_global_vpc | <img src="https://github.com/terraform-aviatrix-modules/terraform-aviatrix-mc-transit-group/blob/master/img/gcp.png?raw=true" title="GCP"> | null | Enable global VPC for GCP. |
+| instances | <img src="https://github.com/terraform-aviatrix-modules/terraform-aviatrix-mc-transit-group/blob/master/img/aws.png?raw=true" title="AWS"> <img src="https://github.com/terraform-aviatrix-modules/terraform-aviatrix-mc-transit-group/blob/master/img/azure.png?raw=true" title="Azure"> <img src="https://github.com/terraform-aviatrix-modules/terraform-aviatrix-mc-transit-group/blob/master/img/gcp.png?raw=true" title="GCP"> <img src="https://github.com/terraform-aviatrix-modules/terraform-aviatrix-mc-transit-group/blob/master/img/oci.png?raw=true" title="OCI"> <img src="https://github.com/terraform-aviatrix-modules/terraform-aviatrix-mc-transit-group/blob/master/img/alibaba.png?raw=true" title="Alibaba"> | {} | Map of transit gateway instances. Key is the gateway name. See below. |
+| tags | <img src="https://github.com/terraform-aviatrix-modules/terraform-aviatrix-mc-transit-group/blob/master/img/aws.png?raw=true" title="AWS"> <img src="https://github.com/terraform-aviatrix-modules/terraform-aviatrix-mc-transit-group/blob/master/img/azure.png?raw=true" title="Azure"> <img src="https://github.com/terraform-aviatrix-modules/terraform-aviatrix-mc-transit-group/blob/master/img/gcp.png?raw=true" title="GCP"> <img src="https://github.com/terraform-aviatrix-modules/terraform-aviatrix-mc-transit-group/blob/master/img/oci.png?raw=true" title="OCI"> <img src="https://github.com/terraform-aviatrix-modules/terraform-aviatrix-mc-transit-group/blob/master/img/alibaba.png?raw=true" title="Alibaba"> | null | Module-level tags applied to all instances. |
+| tunnel_detection_time | <img src="https://github.com/terraform-aviatrix-modules/terraform-aviatrix-mc-transit-group/blob/master/img/aws.png?raw=true" title="AWS"> <img src="https://github.com/terraform-aviatrix-modules/terraform-aviatrix-mc-transit-group/blob/master/img/azure.png?raw=true" title="Azure"> <img src="https://github.com/terraform-aviatrix-modules/terraform-aviatrix-mc-transit-group/blob/master/img/gcp.png?raw=true" title="GCP"> <img src="https://github.com/terraform-aviatrix-modules/terraform-aviatrix-mc-transit-group/blob/master/img/oci.png?raw=true" title="OCI"> <img src="https://github.com/terraform-aviatrix-modules/terraform-aviatrix-mc-transit-group/blob/master/img/alibaba.png?raw=true" title="Alibaba"> | null | Module-level default for tunnel detection time in seconds. |
+| rx_queue_size | <img src="https://github.com/terraform-aviatrix-modules/terraform-aviatrix-mc-transit-group/blob/master/img/aws.png?raw=true" title="AWS"> | null | Module-level default for rx queue size (AWS). |
+
+#### Instance Object
+
+Each entry in the `instances` map supports the following optional attributes:
+
+| key | description |
+| :--- | :--- |
+| subnet | Subnet CIDR or ID for this instance. |
+| gw_size | Override the group-level instance size. |
+| zone | Availability zone for this instance. |
+| allocate_new_eip | Whether to allocate a new EIP. |
+| eip | Existing EIP to use. |
+| single_az_ha | Enable single AZ HA. |
+| tags | Instance-specific tags (merged with module-level tags). |
+| insane_mode | Per-instance HPE override. |
+| insane_mode_az | Insane mode availability zone. |
+| tunnel_detection_time | Per-instance tunnel detection time override. |
+| rx_queue_size | Per-instance rx queue size override. |
+| filtered_spoke_vpc_routes | Filtered spoke VPC routes for this instance. |
+| excluded_advertised_spoke_routes | Excluded advertised spoke routes for this instance. |
+| customized_transit_vpc_routes | Set of customized transit VPC routes for this instance. |
+| bgp_manual_spoke_advertise_cidrs | BGP manual spoke advertise CIDRs for this instance. |
+| lan_vpc_id | LAN VPC ID (GCP BGP over LAN). |
+| lan_private_subnet | LAN private subnet (GCP BGP over LAN). |
+| enable_bgp_over_lan | Per-instance BGP over LAN override (Azure/GCP). |
+| bgp_lan_interfaces_count | Number of BGP over LAN interfaces (Azure/GCP). |
+| enable_spot_instance | Launch as a spot instance. |
+| spot_price | Maximum spot price. |
+| delete_spot | Delete spot instance on destroy. |
+| enable_monitor_gateway_subnets | Enable monitoring gateway subnets (AWS). |
+| monitor_exclude_list | Set of subnets excluded from monitoring. |
+| azure_eip_name_resource_group | Name of public IP and resource group in Azure. |
+| availability_domain | Availability domain (OCI). |
+| fault_domain | Fault domain (OCI). |
+| interfaces | List of edge gateway interfaces. |
+| interface_mapping | List of edge gateway interface mappings. |
+| ztp_file_download_path | ZTP file download path (edge). |
+| ztp_file_type | ZTP file type (edge). |
+| device_id | Device ID (edge). |
+| peer_connection_type | Peer connection type (edge). |
+| peer_backup_logical_ifname | Peer backup logical interface names (edge). |
+| eip_map | List of EIP mappings (edge). |
+| management_egress_ip_prefix_list | Management egress IP prefix list (edge). |
+| private_subnet_egress_target | Private subnet egress target (requires insane_mode). |
 
 ### Outputs
+
 This module will return the following outputs:
 
-key | description
-:---|:---
-\<keyname> | \<description of object that will be returned in this output>
+| key | description |
+| :--- | :--- |
+| vpc | The created VPC object. Null when use_existing_vpc is true. |
+| lan_vpc | The GCP LAN VPC object for Transit FireNet. Null when not applicable. |
+| transit_group | The transit group object. |
+| transit_instances | Map of all transit instance objects, keyed by gateway name. |
+| first_instance_name | Name of the first transit instance (used for firenet and peering references). |
+| mc_firenet_details | Object with firenet integration details for composing with the mc-firenet module. |
