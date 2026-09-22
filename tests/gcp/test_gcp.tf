@@ -14,22 +14,22 @@ provider "aviatrix" {}
 module "single_instance" {
   source = "../.."
 
-  cloud    = "gcp"
-  name     = "transit-single-gcp"
-  region   = "us-east1"
-  cidr     = "10.1.0.0/23"
-  account  = "GCP"
+  cloud     = "gcp"
+  name      = "transit-single-gcp"
+  region    = "us-east1"
+  cidr      = "10.1.0.0/23"
+  account   = "GCP"
   instances = { for i in range(1) : "transit-single-gcp-${i + 1}" => {} }
 }
 
 module "multi_instance" {
   source = "../.."
 
-  cloud    = "gcp"
-  name     = "transit-multi-gcp"
-  region   = "us-east1"
-  cidr     = "10.2.0.0/23"
-  account  = "GCP"
+  cloud     = "gcp"
+  name      = "transit-multi-gcp"
+  region    = "us-east1"
+  cidr      = "10.2.0.0/23"
+  account   = "GCP"
   instances = { for i in range(2) : "transit-multi-gcp-${i + 1}" => {} }
 }
 

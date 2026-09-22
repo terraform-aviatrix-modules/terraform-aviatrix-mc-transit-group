@@ -394,11 +394,11 @@ variable "instances" {
       type  = string
       index = number
     })))
-    ztp_file_download_path           = optional(string)
-    ztp_file_type                    = optional(string)
-    device_id                        = optional(string)
-    peer_connection_type             = optional(string)
-    peer_backup_logical_ifname       = optional(list(string))
+    ztp_file_download_path     = optional(string)
+    ztp_file_type              = optional(string)
+    device_id                  = optional(string)
+    peer_connection_type       = optional(string)
+    peer_backup_logical_ifname = optional(list(string))
     eip_map = optional(list(object({
       logical_ifname = string
       private_ip     = string

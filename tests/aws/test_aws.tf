@@ -14,22 +14,22 @@ provider "aviatrix" {}
 module "single_instance" {
   source = "../.."
 
-  cloud    = "aws"
-  name     = "transit-single-aws"
-  region   = "eu-central-1"
-  cidr     = "10.1.0.0/23"
-  account  = "AWS"
+  cloud     = "aws"
+  name      = "transit-single-aws"
+  region    = "eu-central-1"
+  cidr      = "10.1.0.0/23"
+  account   = "AWS"
   instances = { for i in range(1) : "transit-single-aws-${i + 1}" => {} }
 }
 
 module "multi_instance" {
   source = "../.."
 
-  cloud    = "aws"
-  name     = "transit-multi-aws"
-  region   = "eu-central-1"
-  cidr     = "10.2.0.0/23"
-  account  = "AWS"
+  cloud     = "aws"
+  name      = "transit-multi-aws"
+  region    = "eu-central-1"
+  cidr      = "10.2.0.0/23"
+  account   = "AWS"
   instances = { for i in range(2) : "transit-multi-aws-${i + 1}" => {} }
 }
 

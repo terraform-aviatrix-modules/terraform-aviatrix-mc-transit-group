@@ -10,7 +10,7 @@ module "transit_firenet_aws" {
   enable_transit_firenet = true
   enable_segmentation    = true
   instances = {
-    "transit-firenet-aws"    = {}
+    "transit-firenet-aws"   = {}
     "transit-firenet-aws-2" = {}
   }
 }

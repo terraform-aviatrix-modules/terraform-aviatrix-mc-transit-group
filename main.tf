@@ -11,11 +11,11 @@ resource "aviatrix_vpc" "default" {
   aviatrix_transit_vpc = local.aviatrix_transit_vpc
   aviatrix_firenet_vpc = local.aviatrix_firenet_vpc
   # Transit/FireNet VPCs do not support customized subnet pairs/size
-  num_of_subnet_pairs  = null
-  subnet_size          = null
-  resource_group       = var.resource_group
-  enable_ipv6          = var.enable_ipv6
-  vpc_ipv6_cidr        = var.ipv6_cidr
+  num_of_subnet_pairs = null
+  subnet_size         = null
+  resource_group      = var.resource_group
+  enable_ipv6         = var.enable_ipv6
+  vpc_ipv6_cidr       = var.ipv6_cidr
 
   dynamic "subnets" {
     for_each = local.cloud == "gcp" ? ["dummy"] : []
@@ -62,24 +62,24 @@ resource "aviatrix_transit_group" "default" {
   private_network = var.private_network
 
   # Optional Feature Flags
-  enable_nat             = var.enable_nat
-  enable_jumbo_frame     = var.enable_jumbo_frame
-  enable_ipv6            = var.enable_ipv6
-  enable_gro_gso         = var.enable_gro_gso
-  enable_vpc_dns_server  = var.enable_vpc_dns_server
+  enable_nat              = var.enable_nat
+  enable_jumbo_frame      = var.enable_jumbo_frame
+  enable_ipv6             = var.enable_ipv6
+  enable_gro_gso          = var.enable_gro_gso
+  enable_vpc_dns_server   = var.enable_vpc_dns_server
   enable_s2c_rx_balancing = var.enable_s2c_rx_balancing
 
   # Optional Transit-Specific
-  enable_hybrid_connection              = var.enable_hybrid_connection
-  enable_connected_transit              = var.enable_connected_transit
-  enable_firenet                        = var.enable_firenet
-  enable_transit_firenet                = var.enable_transit_firenet
-  enable_advertise_transit_cidr         = var.enable_advertise_transit_cidr
-  customized_spoke_vpc_routes           = var.customized_spoke_vpc_routes
-  enable_transit_summarize_cidr_to_tgw  = var.enable_transit_summarize_cidr_to_tgw
-  enable_multi_tier_transit             = var.enable_multi_tier_transit
-  enable_segmentation                   = var.enable_segmentation
-  enable_gateway_load_balancer          = var.enable_gateway_load_balancer
+  enable_hybrid_connection             = var.enable_hybrid_connection
+  enable_connected_transit             = var.enable_connected_transit
+  enable_firenet                       = var.enable_firenet
+  enable_transit_firenet               = var.enable_transit_firenet
+  enable_advertise_transit_cidr        = var.enable_advertise_transit_cidr
+  customized_spoke_vpc_routes          = var.customized_spoke_vpc_routes
+  enable_transit_summarize_cidr_to_tgw = var.enable_transit_summarize_cidr_to_tgw
+  enable_multi_tier_transit            = var.enable_multi_tier_transit
+  enable_segmentation                  = var.enable_segmentation
+  enable_gateway_load_balancer         = var.enable_gateway_load_balancer
 
   # Optional Azure
   private_route_table_config = length(var.private_route_table_config) > 0 ? var.private_route_table_config : null
@@ -203,11 +203,11 @@ resource "aviatrix_transit_instance" "this" {
   }
 
   # Edge: other
-  ztp_file_download_path           = each.value.ztp_file_download_path
-  ztp_file_type                    = each.value.ztp_file_type
-  device_id                        = each.value.device_id
-  peer_connection_type             = each.value.peer_connection_type
-  peer_backup_logical_ifname       = each.value.peer_backup_logical_ifname
+  ztp_file_download_path     = each.value.ztp_file_download_path
+  ztp_file_type              = each.value.ztp_file_type
+  device_id                  = each.value.device_id
+  peer_connection_type       = each.value.peer_connection_type
+  peer_backup_logical_ifname = each.value.peer_backup_logical_ifname
   dynamic "eip_map" {
     for_each = each.value.eip_map != null ? each.value.eip_map : []
     content {
