@@ -58,18 +58,6 @@ variable "resource_group" {
   default     = null
 }
 
-variable "subnet_pairs" {
-  description = "Number of public/private subnet pairs. Only used for AWS and Azure VPC creation."
-  type        = number
-  default     = null
-}
-
-variable "subnet_size" {
-  description = "Size of each subnet (CIDR prefix length). Only used for AWS and Azure VPC creation."
-  type        = number
-  default     = null
-}
-
 variable "enable_ipv6" {
   description = "Enable IPv6 on the VPC and transit group."
   type        = bool
@@ -290,14 +278,6 @@ variable "bgp_send_communities" {
 
 variable "bgp_accept_communities" {
   description = "Enable accepting BGP communities."
-  type        = bool
-  default     = null
-}
-
-# --- Optional BGP over LAN ---
-
-variable "enable_bgp_over_lan" {
-  description = "Enable BGP over LAN on the transit group."
   type        = bool
   default     = null
 }

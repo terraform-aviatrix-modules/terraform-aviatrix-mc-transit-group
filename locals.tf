@@ -48,22 +48,6 @@ locals {
   instance_size = length(var.instance_size) > 0 ? var.instance_size : lookup(local.instance_size_map, local.cloud, "")
 
   ###############################################################################
-  # VPC subnet pair / size defaults
-  ###############################################################################
-  subnet_pairs_map = {
-    aws   = 2
-    azure = 2
-  }
-
-  subnet_size_map = {
-    aws   = 28
-    azure = 28
-  }
-
-  subnet_pairs = var.subnet_pairs != null ? var.subnet_pairs : lookup(local.subnet_pairs_map, local.cloud, null)
-  subnet_size  = var.subnet_size != null ? var.subnet_size : lookup(local.subnet_size_map, local.cloud, null)
-
-  ###############################################################################
   # VPC type flags for transit
   ###############################################################################
   aviatrix_transit_vpc = !var.enable_firenet && !var.enable_transit_firenet

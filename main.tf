@@ -10,9 +10,6 @@ resource "aviatrix_vpc" "default" {
   name                 = var.name
   aviatrix_transit_vpc = local.aviatrix_transit_vpc
   aviatrix_firenet_vpc = local.aviatrix_firenet_vpc
-  # Transit/FireNet VPCs do not support customized subnet pairs/size
-  num_of_subnet_pairs = null
-  subnet_size         = null
   resource_group      = var.resource_group
   enable_ipv6         = var.enable_ipv6
   vpc_ipv6_cidr       = var.ipv6_cidr
